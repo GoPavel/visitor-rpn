@@ -21,4 +21,7 @@ executable stateful-parser
                      , mtl
                      , microlens
                      , microlens-mtl
+                     , microlens-th
+                     , exceptions
   other-modules:       Parser
+                       Visitor
