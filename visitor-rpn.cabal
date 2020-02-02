@@ -1,14 +1,14 @@
-name:                stateful-parser
+name:                visitor-rpn
 version:             0.1.0.0
 -- synopsis:
 -- description:
-homepage:            https://github.com/githubuser/stateful-parser#readme
+homepage:            https://github.com/GoPavel/visitor-rpn
 license:             BSD3
 license-file:        LICENSE
-author:              Author name here
-maintainer:          example@example.com
+author:              Golovin Pavel
+maintainer:          GoPavel
 copyright:           2020 Author name here
-category:            Web
+category:            Math
 build-type:          Simple
 cabal-version:       >=1.10
 extra-source-files:  README.md
