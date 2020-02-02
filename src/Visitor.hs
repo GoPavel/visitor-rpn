@@ -2,22 +2,33 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module Visitor where
+module Visitor
+  ( Visitor, StateVisitor(..), VisitorRuntimeException(..),
+    throwVisitor, pop, push, visit, acc, stack, visitWithState
+  ) where
 
-import Control.Monad.Catch
-import Control.Monad.State
-import Lens.Micro
+import Control.Monad.Catch ( Exception, SomeException, MonadThrow, toException
+                           , throwM)
+import Control.Monad.State (runStateT, execStateT, StateT)
+import Lens.Micro ((<&>))
 import Lens.Micro.TH (makeLenses)
-import Lens.Micro.Mtl
-import Type.Reflection
+import Lens.Micro.Mtl (view, (%=), (.=), use)
+import Type.Reflection (Typeable)
 
 data StateVisitor s r
-  = MkStateVisitor { _res :: r
-                   , _stack :: [s]
+  = MkStateVisitor { _acc :: r     -- accumulator
+                   , _stack :: [s] -- stack
                    }
 
 $(makeLenses ''StateVisitor)
 
+{-|
+Walk around 
+  type paramters:
+  s - type of stack elements
+  r - type of accumulative result
+  a - monadic parameter
+-}
 type Visitor s r a = StateT (StateVisitor s r)
                             (Either SomeException) a
 
@@ -40,12 +51,22 @@ push s = do
   stack %= (s :)
 
 
-visit :: [a]
-      -> r                   -- init
-      -> (a -> Visitor s r ()) -- visitor
-      -> Either SomeException r     -- result
-visit xs z f = _res <$> st
+visit :: (Foldable t)
+      => t a                     -- elements for visiting
+      -> r                       -- init accumulator
+      -> (a -> Visitor s r ())     -- visitor
+      -> Either SomeException r  -- result
+visit xs z f = st <&> view acc
   where
-    st = execStateT walk base_state
+    st = visitWithState xs z f
+
+visitWithState
+     :: (Foldable t)
+     => t a
+     -> r
+     -> (a -> Visitor s r ())
+     -> Either SomeException (StateVisitor s r)
+visitWithState xs z f = st
+  where
+    st = execStateT (f `mapM_` xs) base_state
     base_state = MkStateVisitor z []
-    walk = mapM_ f xs
